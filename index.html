@@ -2,132 +2,101 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>현호 일정관리</title>
+<title>현호 일정관리 v1</title>
 
 <style>
-body { font-family:-apple-system; background:#fafafa; margin:0;}
-.container { max-width:700px; margin:auto; padding:16px;}
-
-.header { display:flex; justify-content:space-between; align-items:center;}
-.left-group { display:flex; gap:8px; align-items:center;}
-
-.add-btn {
-  background:black; color:white;
-  border:none; padding:6px 10px;
-  border-radius:10px;
+body {
+  font-family: -apple-system;
+  background: #fafafa;
+  margin: 0;
 }
 
-.view-buttons button {
-  border:none; background:#eee;
-  padding:6px 10px;
-  border-radius:10px;
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 16px;
 }
-.view-buttons .active { background:black; color:white;}
+
+.header {
+  text-align: center;
+  margin-bottom: 10px;
+}
 
 .calendar {
-  background:white;
-  border-radius:16px;
-  padding:12px;
-  margin-top:10px;
+  background: white;
+  border-radius: 16px;
+  padding: 12px;
 }
 
 .weekdays, .days {
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
 }
 
-.weekdays div { text-align:center; font-size:12px;}
-.weekdays div:nth-child(1){color:red;}
-.weekdays div:nth-child(7){color:blue;}
+.weekdays div {
+  text-align: center;
+  font-size: 12px;
+}
+
+.weekdays div:nth-child(1) { color: red; }
+.weekdays div:nth-child(7) { color: blue; }
 
 .day {
-  background:#fafafa;
-  border-radius:10px;
-  min-height:80px;
-  padding:6px;
-  cursor:pointer;
+  border-radius: 10px;
+  min-height: 80px;
+  padding: 6px;
+  cursor: pointer;
 }
 
-.day:nth-child(7n+1){color:red;}
-.day:nth-child(7n){color:blue;}
-
-.item {
-  font-size:10px;
-  border-radius:6px;
-  padding:2px;
-  margin-top:2px;
-  cursor:pointer;
+.day:hover {
+  background: #eee;
 }
 
-.item.event { background:black; color:white;}
-.item.todo { background:#ddd;}
+.date-num {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
 
+.event {
+  font-size: 10px;
+  background: black;
+  color: white;
+  border-radius: 6px;
+  padding: 2px;
+  margin-top: 2px;
+}
+
+/* 모달 */
 .modal {
-  position:fixed;
+  position: fixed;
   top:0; left:0; right:0; bottom:0;
-  background:rgba(0,0,0,0.4);
-  display:none;
-  justify-content:center;
-  align-items:center;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
 }
 
 .modal-content {
-  background:white;
-  padding:20px;
-  border-radius:16px;
-  width:320px;
-  max-height:90vh;
-  overflow-y:auto;
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  width: 300px;
 }
 
-input, select, textarea {
-  width:100%;
-  margin-top:10px;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #ddd;
+input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
 }
 
-textarea { height:80px; }
-
-.checkbox-row {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-top:10px;
-}
-
-.checkbox-row input {
-  accent-color:#007aff;
-}
-
-button.main {
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:10px;
-  background:black;
-  color:white;
-  margin-top:12px;
-}
-
-.emoji-list {
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin-top:10px;
-}
-
-.emoji {
-  font-size:20px;
-  cursor:pointer;
-  padding:5px;
-}
-
-.emoji.active {
-  background:black;
-  color:white;
-  border-radius:6px;
+button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  background: black;
+  color: white;
+  border-radius: 10px;
 }
 </style>
 </head>
@@ -137,16 +106,7 @@ button.main {
 <div class="container">
 
 <div class="header">
-  <div class="left-group">
-    <button class="add-btn" onclick="openAddModal()">+ 추가</button>
-    <h3 id="monthLabel"></h3>
-  </div>
-
-  <div class="view-buttons">
-    <button onclick="setView('month')" class="active">월</button>
-    <button onclick="setView('week')">주</button>
-    <button onclick="setView('day')">일</button>
-  </div>
+  <h2 id="monthLabel"></h2>
 </div>
 
 <div class="calendar">
@@ -154,29 +114,28 @@ button.main {
     <div>일</div><div>월</div><div>화</div>
     <div>수</div><div>목</div><div>금</div><div>토</div>
   </div>
-  <div class="days" id="calendar"></div>
+  <div class="days" id="days"></div>
+</div>
+
 </div>
 
 <!-- 모달 -->
-<div class="modal" id="modal" onclick="outsideClose(event)">
-  <div class="modal-content" id="modalContent"></div>
-</div>
-
+<div class="modal" id="modal" onclick="closeModal(event)">
+  <div class="modal-content">
+    <h3 id="modalDate"></h3>
+    <input id="input" placeholder="일정 입력">
+    <button onclick="addEvent()">추가</button>
+  </div>
 </div>
 
 <script>
 
 /* =========================
-   🧠 STATE (핵심 구조)
+   🧠 STATE
 ========================= */
-let state = {
-  view: "month",
+const state = {
+  current: new Date(),
   selectedDate: null,
-  modal: {
-    open: false,
-    mode: "add", // add / detail / edit
-    item: null
-  },
   events: JSON.parse(localStorage.getItem("events") || "[]")
 };
 
@@ -185,194 +144,106 @@ function save() {
 }
 
 /* =========================
+   📅 DATE UTIL
+========================= */
+function formatDate(y, m, d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+/* =========================
    🎨 RENDER
 ========================= */
+function render() {
+  renderHeader();
+  renderCalendar();
+}
+
+function renderHeader() {
+  const y = state.current.getFullYear();
+  const m = state.current.getMonth();
+  document.getElementById("monthLabel").innerText = `${y}.${m+1}`;
+}
 
 function renderCalendar() {
-  const cal = document.getElementById("calendar");
-  cal.innerHTML = "";
+  const daysEl = document.getElementById("days");
+  daysEl.innerHTML = "";
 
-  for (let i = 1; i <= 30; i++) {
-    const d = document.createElement("div");
-    d.className = "day";
-    d.innerHTML = `<strong>${i}</strong>`;
+  const y = state.current.getFullYear();
+  const m = state.current.getMonth();
 
+  const firstDay = new Date(y, m, 1).getDay();
+  const lastDate = new Date(y, m+1, 0).getDate();
+
+  // 빈칸
+  for (let i = 0; i < firstDay; i++) {
+    daysEl.innerHTML += `<div></div>`;
+  }
+
+  // 날짜
+  for (let d = 1; d <= lastDate; d++) {
+
+    const dateStr = formatDate(y, m, d);
+
+    const div = document.createElement("div");
+    div.className = "day";
+
+    div.innerHTML = `<div class="date-num">${d}</div>`;
+
+    // 이벤트 표시
     state.events
-      .filter(e => e.date === i)
+      .filter(e => e.date === dateStr)
       .forEach(e => {
-        const el = document.createElement("div");
-        el.className = "item " + e.type;
-        el.innerText = e.emoji + " " + e.title;
-
-        el.onclick = (ev) => {
-          ev.stopPropagation();
-          openDetail(e);
-        };
-
-        d.appendChild(el);
+        const ev = document.createElement("div");
+        ev.className = "event";
+        ev.innerText = e.title;
+        div.appendChild(ev);
       });
 
-    d.onclick = () => {
-      state.selectedDate = i;
-      openAddModal();
-    };
+    div.onclick = () => openModal(dateStr);
 
-    cal.appendChild(d);
-  }
-}
-
-function renderModal() {
-  const modal = document.getElementById("modal");
-  const content = document.getElementById("modalContent");
-
-  if (!state.modal.open) {
-    modal.style.display = "none";
-    return;
-  }
-
-  modal.style.display = "flex";
-
-  if (state.modal.mode === "add" || state.modal.mode === "edit") {
-    const item = state.modal.item || {};
-
-    content.innerHTML = `
-      <h3>${state.modal.mode === "edit" ? "수정" : "추가"}</h3>
-
-      <input id="title" value="${item.title || ""}" placeholder="제목">
-
-      <div class="emoji-list" id="emojiList"></div>
-
-      <select id="start"></select>
-      <select id="end"></select>
-
-      <div class="checkbox-row">
-        <input type="checkbox" id="allDay" ${item.allDay ? "checked" : ""}>
-        <label>종일 일정</label>
-      </div>
-
-      <textarea id="desc">${item.desc || ""}</textarea>
-
-      <button class="main" onclick="saveItem()">저장</button>
-    `;
-
-    renderEmoji(item.emoji);
-    renderTime("start", item.start);
-    renderTime("end", item.end);
-
-  } else {
-    const item = state.modal.item;
-
-    content.innerHTML = `
-      <h3>${item.emoji} ${item.title}</h3>
-      <p>${item.start} ~ ${item.end}</p>
-      <p>${item.desc || ""}</p>
-
-      <button class="main" onclick="editItem()">수정</button>
-      <button class="main" onclick="deleteItem()">삭제</button>
-    `;
+    daysEl.appendChild(div);
   }
 }
 
 /* =========================
-   ⚙️ HANDLER
+   ⚙️ MODAL
 ========================= */
 
-function openAddModal() {
-  state.modal = { open: true, mode: "add", item: null };
-  renderModal();
+function openModal(date) {
+  state.selectedDate = date;
+  document.getElementById("modalDate").innerText = date;
+  document.getElementById("modal").style.display = "flex";
 }
 
-function openDetail(item) {
-  state.modal = { open: true, mode: "detail", item };
-  renderModal();
+function closeModal(e) {
+  if (e.target.id === "modal") {
+    document.getElementById("modal").style.display = "none";
+  }
 }
 
-function editItem() {
-  state.modal.mode = "edit";
-  renderModal();
-}
+function addEvent() {
+  const val = document.getElementById("input").value;
 
-function deleteItem() {
-  state.events = state.events.filter(e => e.id !== state.modal.item.id);
-  save();
-  state.modal.open = false;
-  renderCalendar();
-  renderModal();
-}
+  if (!val) return;
 
-function saveItem() {
-  const title = document.getElementById("title").value;
-  const desc = document.getElementById("desc").value;
-
-  const item = {
+  state.events.push({
     id: Date.now(),
     date: state.selectedDate,
-    title,
-    desc,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    allDay: document.getElementById("allDay").checked,
-    emoji: selectedEmoji || "📌",
-    type: "event"
-  };
-
-  state.events.push(item);
+    title: val
+  });
 
   save();
-  state.modal.open = false;
-  renderCalendar();
-  renderModal();
-}
 
-/* =========================
-   🎛️ UI HELPERS
-========================= */
+  document.getElementById("input").value = "";
+  document.getElementById("modal").style.display = "none";
 
-let selectedEmoji = "📌";
-
-function renderEmoji(selected) {
-  const list = document.getElementById("emojiList");
-  ["📌","🔥","💪","🎉","📚","💰","❤️","🏃","🍽️"].forEach(e => {
-    const el = document.createElement("span");
-    el.innerText = e;
-    el.className = "emoji";
-    if (e === selected) el.classList.add("active");
-
-    el.onclick = () => {
-      document.querySelectorAll(".emoji").forEach(x=>x.classList.remove("active"));
-      el.classList.add("active");
-      selectedEmoji = e;
-    };
-
-    list.appendChild(el);
-  });
-}
-
-function renderTime(id, value) {
-  const sel = document.getElementById(id);
-  for (let i = 0; i < 24; i++) {
-    let t = (i < 10 ? "0" + i : i) + ":00";
-    let opt = document.createElement("option");
-    opt.value = t;
-    opt.innerText = t;
-    if (t === value) opt.selected = true;
-    sel.appendChild(opt);
-  }
-}
-
-function outsideClose(e) {
-  if (e.target.id === "modal") {
-    state.modal.open = false;
-    renderModal();
-  }
+  render();
 }
 
 /* =========================
    🚀 INIT
 ========================= */
-
-renderCalendar();
-renderModal();
+render();
 
 </script>
 
