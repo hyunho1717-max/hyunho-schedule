@@ -1,10 +1,161 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>현호 일정관리</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont;
+      background: #fafafa;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 10px;
+    }
+
+    .tab {
+      padding: 10px;
+      border-radius: 20px;
+      background: #eee;
+      cursor: pointer;
+    }
+
+    .active {
+      background: black;
+      color: white;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .todo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-health { color: green; }
+    .category-look { color: purple; }
+    .category-social { color: orange; }
+    .category-money { color: blue; }
+    .category-life { color: gray; }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      background: black;
+      color: white;
+      margin-top: 10px;
+    }
+
+    .mission {
+      background: #ffe066;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>현호의 일정관리</h1>
-  <p>첫 서비스 성공 🎉</p>
+<div class="container">
+  <h1>현호 일정관리</h1>
+
+  <!-- 달력 뷰 -->
+  <div class="tabs">
+    <div class="tab active">월</div>
+    <div class="tab">주</div>
+    <div class="tab">일</div>
+  </div>
+
+  <!-- 이벤트 -->
+  <div class="card">
+    <h3>📅 이벤트</h3>
+    <div id="eventList"></div>
+    <button onclick="addEvent()">이벤트 추가</button>
+  </div>
+
+  <!-- To-do -->
+  <div class="card">
+    <h3>✅ To-do</h3>
+    <div id="todoList"></div>
+    <button onclick="addTodo()">To-do 추가</button>
+  </div>
+
+  <!-- 미션 -->
+  <div class="card">
+    <h3>🔥 미션</h3>
+    <div id="missionList"></div>
+    <button onclick="addMission()">미션 추가</button>
+  </div>
+</div>
+
+<script>
+function addEvent() {
+  const name = prompt("이벤트 이름");
+  const emoji = prompt("이모지 입력 (예: 🎉)");
+
+  if (!name) return;
+
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `${emoji || "📌"} ${name}`;
+
+  div.onclick = () => alert("상세: " + name);
+
+  document.getElementById("eventList").appendChild(div);
+}
+
+function addTodo() {
+  const name = prompt("할 일 입력");
+  const category = prompt("카테고리 선택: health / look / social / money / life");
+
+  if (!name) return;
+
+  const div = document.createElement("div");
+  div.className = "todo category-" + category;
+
+  div.innerHTML = `
+    <input type="checkbox">
+    <span>${name}</span>
+  `;
+
+  document.getElementById("todoList").appendChild(div);
+}
+
+function addMission() {
+  const name = prompt("미션 입력");
+
+  if (!name) return;
+
+  const div = document.createElement("div");
+  div.className = "mission";
+  div.innerText = name;
+
+  document.getElementById("missionList").appendChild(div);
+}
+</script>
+
 </body>
 </html>
