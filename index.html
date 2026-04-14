@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>혀노의 일정관리</title>
+<title>현호 일정관리</title>
 
 <style>
 body { font-family:-apple-system; background:#fafafa; margin:0;}
@@ -22,40 +22,30 @@ body { font-family:-apple-system; background:#fafafa; margin:0;}
 .day {
   background:#fafafa; border-radius:10px;
   min-height:80px; padding:6px;
+  cursor:pointer;
 }
 
 .day.week { height:200px; overflow-y:auto;}
 
-.event-bar { background:black; color:white; font-size:10px; border-radius:6px; padding:2px;}
-.todo-bar { font-size:10px; border-radius:6px; padding:2px;}
-
-.category-health { background:#4caf50; color:white;}
-.category-look { background:#9c27b0; color:white;}
-.category-social { background:#ff9800; color:white;}
-.category-money { background:#2196f3; color:white;}
-.category-life { background:#9e9e9e; color:white;}
-
-.detail { background:white; border-radius:16px; padding:12px; margin-top:10px;}
-
-.card-item {
-  background:white;
-  border-radius:12px;
-  padding:10px;
-  margin-top:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+.event-bar, .todo-bar {
+  font-size:10px; border-radius:6px; padding:2px;
+  margin-top:2px;
+  cursor:pointer;
 }
+
+.event-bar { background:black; color:white;}
+.todo-bar { background:#ddd;}
+
+.detail { display:none; }
 
 button.main {
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:10px;
-  background:black;
-  color:white;
+  width:100%; padding:10px;
+  border:none; border-radius:10px;
+  background:black; color:white;
   margin-top:8px;
 }
 
-/* 모달 */
+/* 모달 공통 */
 .modal {
   position:fixed;
   top:0; left:0; right:0; bottom:0;
@@ -63,52 +53,59 @@ button.main {
   display:none;
   justify-content:center;
   align-items:center;
+  z-index:1000;
 }
 
 .modal-content {
   background:white;
   padding:20px;
   border-radius:16px;
-  width:300px;
+  width:320px;
+  max-height:80vh;
+  overflow:auto;
 }
 
-input, select {
+/* 입력 UI */
+input, select, textarea {
   width:100%;
   margin-top:8px;
-  padding:8px;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
 }
 
-.mission {
-  background:#ffe066;
-  padding:12px;
+textarea {
+  height:80px;
+  resize:none;
+}
+
+/* 이모지 선택 */
+.emoji-list {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+
+.emoji {
+  font-size:20px;
+  cursor:pointer;
+  padding:5px;
+  border-radius:6px;
+}
+
+.emoji.active {
+  background:black;
+  color:white;
+}
+
+/* 상세 카드 */
+.card-item {
+  background:white;
   border-radius:12px;
-  margin-top:10px;
-  font-weight:bold;
+  padding:12px;
 }
 
-/* 🔥 타임라인 */
-.timeline {
-  position: relative;
-  border-left: 2px solid #eee;
-  margin-top: 10px;
-  height: 800px;
-}
-
-.time-slot {
-  position: absolute;
-  left: -40px;
-  font-size: 10px;
-  color: gray;
-}
-
-.event-block {
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  border-radius: 10px;
-  padding: 6px;
-  font-size: 12px;
-}
 </style>
 </head>
 
@@ -134,42 +131,34 @@ input, select {
   <div class="days" id="calendar"></div>
 </div>
 
-<div class="detail" id="detail">
-  <h3>날짜 선택</h3>
-</div>
-
-<div class="mission" id="missionList">
-🔥 미션: 꾸준한 루틴 만들기
-</div>
-
-<button class="main" onclick="openModal()">+ 추가</button>
-
-<!-- 모달 -->
-<div class="modal" id="modal">
+<!-- 추가 모달 -->
+<div class="modal" id="modal" onclick="outsideClose(event)">
   <div class="modal-content">
-    <h3>추가</h3>
+    <h3>일정 추가</h3>
 
     <select id="type">
       <option value="event">이벤트</option>
       <option value="todo">To-do</option>
-      <option value="mission">미션</option>
     </select>
 
-    <input id="name" placeholder="이름 (최대 20자)">
-    <input id="emoji" placeholder="이모지 (예: 🎉)">
-    <input id="time" placeholder="시간 (예: 14:00)">
+    <input id="name" placeholder="제목 (1~20자)">
 
-    <select id="category">
-      <option value="health">건강관리</option>
-      <option value="look">외모관리</option>
-      <option value="social">대인관계</option>
-      <option value="money">금전관리</option>
-      <option value="life">일반생활</option>
-    </select>
+    <!-- 이모지 -->
+    <div class="emoji-list" id="emojiList"></div>
+
+    <!-- 시간 -->
+    <select id="time"></select>
+
+    <!-- 설명 -->
+    <textarea id="desc" placeholder="설명 (최대 30자)"></textarea>
 
     <button class="main" onclick="addItem()">저장</button>
-    <button class="main" onclick="closeModal()">닫기</button>
   </div>
+</div>
+
+<!-- 상세 모달 -->
+<div class="modal" id="detailModal" onclick="outsideClose(event)">
+  <div class="modal-content" id="detailContent"></div>
 </div>
 
 </div>
@@ -181,194 +170,152 @@ let currentYear = today.getFullYear();
 let currentMonth = today.getMonth();
 let currentDay = today.getDate();
 
+let selectedDate = null;
+let selectedEmoji = "📌";
+
 let data = JSON.parse(localStorage.getItem("data") || "{}");
 
 function save() {
   localStorage.setItem("data", JSON.stringify(data));
 }
 
-function setView(v) {
-  view = v;
-  document.querySelectorAll('.view-buttons button').forEach(btn=>{
-    btn.classList.remove('active');
-    if(btn.innerText === (v==='month'?'월':v==='week'?'주':'일')) btn.classList.add('active');
-  });
+/* 이모지 초기화 */
+const emojis = ["📌","🔥","💪","🎉","📚","💰","❤️","🏃","🍽️"];
+const emojiList = document.getElementById("emojiList");
+
+emojis.forEach(e=>{
+  const span = document.createElement("span");
+  span.innerText = e;
+  span.className = "emoji";
+  span.onclick = ()=>{
+    document.querySelectorAll(".emoji").forEach(el=>el.classList.remove("active"));
+    span.classList.add("active");
+    selectedEmoji = e;
+  };
+  emojiList.appendChild(span);
+});
+
+/* 시간 드롭다운 */
+const timeSelect = document.getElementById("time");
+for(let i=0;i<24;i++){
+  const t = (i<10?"0"+i:i)+":00";
+  const opt = document.createElement("option");
+  opt.value=t;
+  opt.innerText=t;
+  timeSelect.appendChild(opt);
+}
+
+/* 뷰 */
+function setView(v){
+  view=v;
   renderCalendar();
-  renderDetail();
 }
 
-function getDaysInMonth(year, month) {
-  return new Date(year, month + 1, 0).getDate();
+function getDaysInMonth(y,m){
+  return new Date(y,m+1,0).getDate();
 }
 
-function renderCalendar() {
+function renderCalendar(){
   const cal = document.getElementById("calendar");
-  cal.innerHTML = "";
+  cal.innerHTML="";
 
   document.getElementById("monthLabel").innerText =
-    `${currentYear}.${currentMonth + 1}`;
+    `${currentYear}.${currentMonth+1}`;
 
-  if(view === 'day'){
-    const d = document.createElement("div");
-    d.className = "day";
-    d.innerHTML = `<strong>${currentDay}</strong>`;
-    cal.appendChild(d);
-    return;
+  let days = view==='week'?7:getDaysInMonth(currentYear,currentMonth);
+
+  if(view==='day'){
+    days = 1;
   }
-
-  let days = view === 'week' ? 7 : getDaysInMonth(currentYear, currentMonth);
 
   for(let i=1;i<=days;i++){
     const d = document.createElement("div");
-    d.className = view==='week' ? "day week" : "day";
-
+    d.className="day";
     d.innerHTML=`<strong>${i}</strong>`;
 
     if(data[i]){
-      let count=0;
       data[i].forEach(item=>{
-        if(view==='week' && count>=10) return;
-
         const el = document.createElement("div");
-        el.className = item.type==="event"
-          ? "event-bar"
-          : "todo-bar category-"+item.category;
+        el.className=item.type==="event"?"event-bar":"todo-bar";
+        el.innerText=item.emoji+" "+item.name;
 
-        el.innerText = item.emoji + " " + item.name;
+        el.onclick=(e)=>{
+          e.stopPropagation();
+          openDetail(item);
+        };
+
         d.appendChild(el);
-        count++;
       });
     }
 
     d.onclick=()=>{
-      currentDay=i;
-      renderDetail();
+      selectedDate=i;
+      openModal();
     };
 
     cal.appendChild(d);
   }
 }
 
-function renderDetail(){
-  const detail=document.getElementById("detail");
-
-  if(view !== 'day'){
-    detail.innerHTML = `<h3>${currentDay}일</h3>`;
-    return;
-  }
-
-  detail.innerHTML = `
-    <div style="display:flex; justify-content:space-between;">
-      <button onclick="moveDay(-1)">◀</button>
-      <h3>${currentDay}일</h3>
-      <button onclick="moveDay(1)">▶</button>
-    </div>
-
-    <div class="timeline" id="timeline"></div>
-  `;
-
-  const timeline = document.getElementById("timeline");
-
-  for(let h=0; h<24; h++){
-    const label = document.createElement("div");
-    label.className="time-slot";
-    label.style.top = (h * 60) + "px";
-    label.innerText = h + ":00";
-    timeline.appendChild(label);
-  }
-
-  if(data[currentDay]){
-    data[currentDay].forEach(item=>{
-      if(!item.time) return;
-
-      const hour = parseInt(item.time.split(":")[0]);
-
-      const block = document.createElement("div");
-      block.className = "event-block";
-
-      block.style.top = (hour * 60) + "px";
-      block.style.height = "50px";
-
-      block.style.background = item.type==="event"
-        ? "#000"
-        : "#ddd";
-
-      block.style.color = item.type==="event"
-        ? "white"
-        : "black";
-
-      block.innerText = item.emoji + " " + item.name;
-
-      timeline.appendChild(block);
-    });
-  }
-}
-
-function moveDay(diff){
-  const max = getDaysInMonth(currentYear, currentMonth);
-
-  currentDay += diff;
-
-  if(currentDay < 1){
-    currentMonth--;
-    if(currentMonth < 0){
-      currentMonth = 11;
-      currentYear--;
-    }
-    currentDay = getDaysInMonth(currentYear, currentMonth);
-  }
-
-  if(currentDay > max){
-    currentDay = 1;
-    currentMonth++;
-    if(currentMonth > 11){
-      currentMonth = 0;
-      currentYear++;
-    }
-  }
-
-  renderCalendar();
-  renderDetail();
-}
-
+/* 추가 */
 function openModal(){
   document.getElementById("modal").style.display="flex";
 }
 
-function closeModal(){
-  document.getElementById("modal").style.display="none";
+function outsideClose(e){
+  if(e.target.classList.contains("modal")){
+    e.target.style.display="none";
+  }
 }
 
 function addItem(){
-  const type=document.getElementById("type").value;
   const name=document.getElementById("name").value;
-  const emoji=document.getElementById("emoji").value || "📌";
+  const type=document.getElementById("type").value;
   const time=document.getElementById("time").value;
-  const category=document.getElementById("category").value;
+  const desc=document.getElementById("desc").value;
 
   if(!name || name.length>20){
-    alert("이름은 1~20자");
+    alert("제목은 1~20자");
     return;
   }
 
-  if(type==="mission"){
-    document.getElementById("missionList").innerText = "🔥 미션: " + name;
-    closeModal();
+  if(desc.length>30){
+    alert("설명은 30자 이하");
     return;
   }
 
-  if(!data[currentDay]) data[currentDay]=[];
+  if(!data[selectedDate]) data[selectedDate]=[];
 
-  data[currentDay].push({type,name,emoji,category,time});
+  data[selectedDate].push({
+    name,
+    type,
+    emoji:selectedEmoji,
+    time,
+    desc
+  });
+
   save();
-
-  closeModal();
+  document.getElementById("modal").style.display="none";
   renderCalendar();
-  renderDetail();
+}
+
+/* 상세 보기 */
+function openDetail(item){
+  const modal=document.getElementById("detailModal");
+  const content=document.getElementById("detailContent");
+
+  content.innerHTML=`
+    <div class="card-item">
+      <h3>${item.emoji} ${item.name}</h3>
+      <p>${item.time}</p>
+      <p>${item.desc || "설명 없음"}</p>
+    </div>
+  `;
+
+  modal.style.display="flex";
 }
 
 renderCalendar();
-renderDetail();
 </script>
 
 </body>
